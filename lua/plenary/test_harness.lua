@@ -77,10 +77,19 @@ function harness.test_directory(directory, opts)
   local failure = false
 
   local jobs = vim.tbl_map(function(p)
+    -- Original
+    --local args = {
+    --  "--headless",
+    --  "-c",
+    --  string.format('lua require("plenary.busted").run("%s")', p:absolute()),
+    --}
+
+    -- Modify it so that it works even in a Windows environment.
+    local abspath = p:absolute():gsub('\\', '/')
     local args = {
       "--headless",
       "-c",
-      string.format('lua require("plenary.busted").run("%s")', p:absolute()),
+      string.format('lua require("plenary.busted").run("%s")', abspath),
     }
 
     if opts.minimal ~= nil then
@@ -166,12 +175,19 @@ function harness.test_directory(directory, opts)
 end
 
 function harness._find_files_to_run(directory)
-  local finder = Job:new {
-    command = "find",
-    args = { directory, "-type", "f", "-name", "*_spec.lua" },
-  }
+  -- Original
+  --local finder = Job:new {
+  --  command = "find",
+  --  args = { directory, "-type", "f", "-name", "*_spec.lua" },
+  --}
 
-  return vim.tbl_map(Path.new, finder:sync())
+  --return vim.tbl_map(Path.new, finder:sync())
+
+  -- Modify it so that it works even in a Windows environment.
+  return vim.tbl_map(
+    Path.new,
+    vim.fn.glob(directory .. '/**/*_spec.lua', false, true)
+  )
 end
 
 function harness._run_path(test_type, directory)
